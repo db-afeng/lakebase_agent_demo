@@ -34,26 +34,28 @@ if [[ "$PREV_HEAD" == "0000000000000000000000000000000000000000" ]]; then
     echo ""
 fi
 
-# Check if branch actually changed (or if it's a new worktree)
-if [[ "$PREV_HEAD" != "$NEW_HEAD" ]] || [[ "$PREV_HEAD" == "0000000000000000000000000000000000000000" ]]; then
+# Always run for branch checkouts ($3 = 1)
+# This handles both:
+#   - Switching to a different branch (PREV_HEAD != NEW_HEAD)
+#   - Creating a new branch at same commit (PREV_HEAD == NEW_HEAD)
+# The lakebase-branch.sh script is idempotent and will skip if branch already exists
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🔄 Running Lakebase branch setup (post-checkout hook)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Run the lakebase-branch.sh script
+if bash "$LAKEBASE_SCRIPT"; then
     echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "🔄 Running Lakebase branch setup (post-checkout hook)"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "✅ Lakebase branch setup complete!"
     echo ""
-    
-    # Run the lakebase-branch.sh script
-    if bash "$LAKEBASE_SCRIPT"; then
-        echo ""
-        echo "✅ Lakebase branch setup complete!"
-        echo ""
-    else
-        echo ""
-        echo "⚠️  Lakebase branch setup had issues (see above)"
-        echo "   You may need to run ./scripts/lakebase-branch.sh manually"
-        echo ""
-        # Don't fail the checkout, just warn
-    fi
+else
+    echo ""
+    echo "⚠️  Lakebase branch setup had issues (see above)"
+    echo "   You may need to run ./scripts/lakebase-branch.sh manually"
+    echo ""
+    # Don't fail the checkout, just warn
 fi
 
 exit 0
