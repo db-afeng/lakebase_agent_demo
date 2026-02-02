@@ -1,0 +1,22 @@
+bundle:
+  name: lakebase-agent-demo
+
+sync:
+  include:
+    - .build
+
+artifacts:
+  default:
+    build: uv run apx build
+
+resources:
+  apps:
+    lakebase-agent-demo-app:
+      name: "lakebase-agent-demo"
+      description: "lakebase-agent-demo created with apx"
+      source_code_path: ./.build
+
+targets:
+  dev:
+    mode: development
+    default: true
