@@ -26,7 +26,7 @@ class AppConfig(BaseSettings):
     # Database settings for Lakebase PostgreSQL
     db_host: str = Field(default="")
     db_port: int = Field(default=5432)
-    db_name: str = Field(default="postgres")
+    db_name: str = Field(default="databricks_postgres")
     db_user: str = Field(default="")
     db_password: str = Field(default="")
     db_sslmode: str = Field(default="require")
