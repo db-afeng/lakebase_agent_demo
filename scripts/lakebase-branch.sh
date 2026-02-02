@@ -102,7 +102,7 @@ get_user_info() {
     echo -e "  Sanitized: ${GREEN}${USER_NAME}${NC}"
 }
 
-# Get current git branch
+# Get current git branch or worktree name
 get_git_branch() {
     echo -e "\n${YELLOW}Getting git branch...${NC}"
     
@@ -111,10 +111,40 @@ get_git_branch() {
         exit 1
     fi
     
-    GIT_BRANCH=$(git branch --show-current)
+    # Try to get the current branch name
+    GIT_BRANCH=$(git branch --show-current 2>/dev/null)
+    
     if [[ -z "$GIT_BRANCH" ]]; then
-        echo -e "${RED}❌ Could not determine git branch (detached HEAD?)${NC}"
-        exit 1
+        # Detached HEAD - common in worktrees
+        echo -e "  ${YELLOW}Detached HEAD detected (worktree)${NC}"
+        
+        # Get the worktree directory name
+        WORKTREE_DIR=$(basename "$(git rev-parse --show-toplevel)")
+        
+        # Try to get the parent branch from the main worktree
+        # git worktree list shows: /path/to/repo <commit> [branch] or (detached HEAD)
+        MAIN_WORKTREE_INFO=$(git worktree list --porcelain 2>/dev/null | head -20)
+        
+        # Find the first worktree that has a branch (the main one usually)
+        PARENT_BRANCH=""
+        while IFS= read -r line; do
+            if [[ "$line" == branch\ refs/heads/* ]]; then
+                PARENT_BRANCH="${line#branch refs/heads/}"
+                break
+            fi
+        done <<< "$MAIN_WORKTREE_INFO"
+        
+        if [[ -n "$PARENT_BRANCH" ]]; then
+            # Combine parent branch + worktree dir for unique naming
+            GIT_BRANCH="${PARENT_BRANCH}-worktree-${WORKTREE_DIR}"
+            echo -e "  Parent branch: ${GREEN}${PARENT_BRANCH}${NC}"
+        else
+            # Fallback: just use worktree directory name
+            GIT_BRANCH="worktree-${WORKTREE_DIR}"
+            echo -e "  ${YELLOW}Could not determine parent branch${NC}"
+        fi
+        
+        echo -e "  Worktree: ${GREEN}${WORKTREE_DIR}${NC}"
     fi
     
     # Sanitize branch name (lowercase, slashes/underscores to hyphens)

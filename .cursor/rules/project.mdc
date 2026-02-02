@@ -97,19 +97,28 @@ When the apx MCP server is available, use these tools:
 
 This project uses **Databricks Lakebase** for PostgreSQL database. Each developer/agent gets their own isolated branch.
 
-### CRITICAL: Before Starting Development
+### ⚠️ CRITICAL: Database Setup Order
 
-**You MUST set up your Lakebase branch before running the app with database features:**
+**ALWAYS run `lakebase-branch.sh` FIRST before ANY database operations:**
 
 ```bash
 ./scripts/lakebase-branch.sh
 ```
 
-This script will:
-1. Create a Lakebase branch named `{your-username}-{git-branch}`
-2. Create an endpoint on that branch
-3. Generate credentials and write to `.env`
-4. Run database migrations
+**🚫 NEVER run `alembic` commands directly before running `lakebase-branch.sh`!**
+
+Why this matters:
+- The script creates YOUR isolated Lakebase branch
+- Running migrations before the script would apply changes to the WRONG database (parent branch)
+- Each worktree/agent gets its own database branch - migrations must target that specific branch
+
+### Correct Order of Operations
+
+1. **First:** Run `./scripts/lakebase-branch.sh` (creates branch, endpoint, credentials, runs migrations)
+2. **Then:** Start development with `uv run apx dev start`
+3. **Later:** If you add new migrations, run `uv run alembic upgrade head` (now targets YOUR branch)
+
+The script handles everything including running migrations on your isolated branch.
 
 ### Branch Naming Convention
 
@@ -118,7 +127,7 @@ This script will:
 | Production (deployed app) | `production` (default branch) |
 | Local dev on `main` | `{username}-main` (e.g., `alex-feng-main`) |
 | Local dev on `feature-x` | `{username}-feature-x` |
-| Agent worktree | `{username}-feature-x-agent-task` |
+| Agent worktree | `{username}-{parent-branch}-worktree-{worktree-dir}` |
 
 Branch names are sanitized: slashes become hyphens, dots become hyphens, all lowercase.
 
@@ -150,8 +159,10 @@ databricks postgres generate-database-credential \
 
 ### Database Migrations (Alembic)
 
+**⚠️ Only run these commands AFTER `./scripts/lakebase-branch.sh` has been executed!**
+
 ```bash
-# Apply all migrations
+# Apply all migrations (only after lakebase-branch.sh!)
 uv run alembic upgrade head
 
 # Create new migration after model changes
@@ -163,6 +174,8 @@ uv run alembic downgrade -1
 # Show current migration status
 uv run alembic current
 ```
+
+**Note:** The `lakebase-branch.sh` script automatically runs `alembic upgrade head` after setting up your branch. You only need to run migrations manually if you create new ones during development.
 
 ### Environment Configuration
 
