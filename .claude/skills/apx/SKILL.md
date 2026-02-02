@@ -114,3 +114,66 @@ async def get_items():
 - Routes: `src/lakebase-agent-demo/ui/routes/`
 - Components: `src/lakebase-agent-demo/ui/components/`
 - Backend: `src/lakebase-agent-demo/backend/`
+
+## 🗄️ Lakebase Database
+
+This project uses **Databricks Lakebase** for PostgreSQL database with branch isolation.
+
+### ⚠️ REQUIRED: Set Up Your Lakebase Branch
+
+**Before starting development, run:**
+
+```bash
+./scripts/lakebase-branch.sh
+```
+
+This creates your isolated Lakebase branch and configures `.env` with credentials.
+
+### Branch Naming Convention
+
+| Context | Lakebase Branch Name |
+|---------|---------------------|
+| Production | `production` |
+| Your local dev | `{your-username}/{git-branch}` |
+| Agent worktree | `{your-username}/{git-branch}/agent-task` |
+
+### Databricks Postgres CLI (>= 0.285)
+
+```bash
+# List your project's branches
+databricks postgres list-branches "projects/9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d"
+
+# Create a branch (no expiry)
+databricks postgres create-branch "projects/{project_id}" "{branch_name}" \
+  --json '{"spec": {"no_expiry": true}}'
+
+# Create an endpoint
+databricks postgres create-endpoint \
+  "projects/{project_id}/branches/{branch_id}" "dev"
+
+# Generate credentials for an endpoint
+databricks postgres generate-database-credential \
+  "projects/{project_id}/branches/{branch_id}/endpoints/{endpoint_id}"
+```
+
+### Alembic Migrations
+
+```bash
+# Apply migrations to your branch
+uv run alembic upgrade head
+
+# Create new migration
+uv run alembic revision --autogenerate -m "add new table"
+
+# Rollback
+uv run alembic downgrade -1
+```
+
+### Environment Configuration
+
+| Environment | Config Source | Branch |
+|-------------|---------------|--------|
+| Local dev | `.env` (gitignored) | Your personal branch |
+| Production | `databricks.yml` | `production` |
+
+**Safety:** Local development NEVER touches production. Each dev/agent works on isolated branches.

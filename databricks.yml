@@ -13,8 +13,21 @@ resources:
   apps:
     lakebase-agent-demo-app:
       name: "lakebase-agent-demo"
-      description: "lakebase-agent-demo created with apx"
+      description: "Data & Bricks Store - E-commerce demo powered by Lakebase"
       source_code_path: ./.build
+      config:
+        env:
+          # Production Lakebase connection (production branch)
+          - name: LAKEBASE_AGENT_DEMO_DB_HOST
+            value: "ep-young-mode-d1ljatae.database.us-west-2.cloud.databricks.com"
+          - name: LAKEBASE_AGENT_DEMO_DB_PORT
+            value: "5432"
+          - name: LAKEBASE_AGENT_DEMO_DB_NAME
+            value: "postgres"
+          - name: LAKEBASE_AGENT_DEMO_DB_SSLMODE
+            value: "require"
+          # Note: DB_USER and DB_PASSWORD should be set via Databricks App secrets
+          # or service principal authentication in production
 
 targets:
   dev:

@@ -18,12 +18,16 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting app with configuration:\n{config}")
 
     runtime = Runtime(config)
+    runtime.init_database()
 
     # Store in app.state for access via dependencies
     app.state.config = config
     app.state.runtime = runtime
 
     yield
+
+    # Cleanup
+    await runtime.close_database()
 
 
 app = FastAPI(title=f"{app_name}", lifespan=lifespan)

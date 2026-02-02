@@ -1,7 +1,9 @@
+from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from databricks.sdk import WorkspaceClient
-from fastapi import Depends, Header, Request
+from fastapi import Depends, Header, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config import AppConfig
 from .runtime import Runtime
@@ -61,3 +63,36 @@ def get_obo_ws(
     return WorkspaceClient(
         token=token, auth_type="pat"
     )  # set pat explicitly to avoid issues with SP client
+
+
+async def get_db_session(
+    runtime: RuntimeDep,
+) -> AsyncGenerator[AsyncSession, None]:
+    """
+    Returns an async database session.
+    Automatically commits on success, rolls back on error.
+
+    Example usage:
+    @api.get("/items/")
+    async def read_items(session: Annotated[AsyncSession, Depends(get_db_session)]):
+        result = await session.execute(select(Item))
+        return result.scalars().all()
+    """
+    if not runtime.has_database or runtime.session_maker is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Database not configured. Run scripts/lakebase-branch.sh to set up your Lakebase branch.",
+        )
+
+    session = runtime.session_maker()
+    try:
+        yield session
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
+
+
+DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
