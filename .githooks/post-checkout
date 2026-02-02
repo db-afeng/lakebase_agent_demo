@@ -1,0 +1,59 @@
+#!/bin/bash
+# Git post-checkout hook
+# Automatically sets up Lakebase branch when checking out or creating worktrees
+
+# Hook parameters:
+# $1 - ref of the previous HEAD
+# $2 - ref of the new HEAD
+# $3 - flag: 1 = branch checkout, 0 = file checkout
+
+PREV_HEAD="$1"
+NEW_HEAD="$2"
+CHECKOUT_TYPE="$3"
+
+# Only run for branch checkouts (not file checkouts)
+if [[ "$CHECKOUT_TYPE" != "1" ]]; then
+    exit 0
+fi
+
+# Get the script directory (handles both regular repos and worktrees)
+SCRIPT_DIR="$(git rev-parse --show-toplevel)/scripts"
+LAKEBASE_SCRIPT="${SCRIPT_DIR}/lakebase-branch.sh"
+
+# Check if the lakebase-branch.sh script exists
+if [[ ! -f "$LAKEBASE_SCRIPT" ]]; then
+    echo "⚠️  lakebase-branch.sh not found at ${LAKEBASE_SCRIPT}"
+    echo "   Skipping Lakebase setup."
+    exit 0
+fi
+
+# Check if this is an initial clone (prev HEAD is all zeros)
+if [[ "$PREV_HEAD" == "0000000000000000000000000000000000000000" ]]; then
+    echo ""
+    echo "🚀 Initial checkout detected - setting up Lakebase branch..."
+    echo ""
+fi
+
+# Check if branch actually changed (or if it's a new worktree)
+if [[ "$PREV_HEAD" != "$NEW_HEAD" ]] || [[ "$PREV_HEAD" == "0000000000000000000000000000000000000000" ]]; then
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🔄 Running Lakebase branch setup (post-checkout hook)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    
+    # Run the lakebase-branch.sh script
+    if bash "$LAKEBASE_SCRIPT"; then
+        echo ""
+        echo "✅ Lakebase branch setup complete!"
+        echo ""
+    else
+        echo ""
+        echo "⚠️  Lakebase branch setup had issues (see above)"
+        echo "   You may need to run ./scripts/lakebase-branch.sh manually"
+        echo ""
+        # Don't fail the checkout, just warn
+    fi
+fi
+
+exit 0

@@ -5,6 +5,7 @@ alwaysApply: true
 # Cursor Agent Rules
 
 # Do's and Don'ts
+- **After cloning:** Run `bun install` (or `uv run apx bun install`) to install dependencies and enable git hooks for automatic Lakebase branch setup.
 - OpenAPI client auto-regenerates on code changes when dev servers are running - don't manually regenerate.
 - Prefer running apx related commands via MCP server if it's available.
 - Use the apx MCP `search_registry_components` and `add_component` tools to find and add shadcn/ui components.
@@ -112,7 +113,18 @@ Why this matters:
 - Running migrations before the script would apply changes to the WRONG database (parent branch)
 - Each worktree/agent gets its own database branch - migrations must target that specific branch
 
-### Correct Order of Operations
+### Automatic Setup via Git Hook
+
+The project includes a **post-checkout hook** that automatically runs `lakebase-branch.sh` when you:
+- Check out a new branch
+- Create a new worktree
+- Clone the repository
+
+**Hooks are automatically enabled** when you run `bun install` (via the `prepare` script in package.json).
+
+Once enabled, the Lakebase branch setup runs automatically - you don't need to run the script manually.
+
+### Manual Setup (if hook not enabled)
 
 1. **First:** Run `./scripts/lakebase-branch.sh` (creates branch, endpoint, credentials, runs migrations)
 2. **Then:** Start development with `uv run apx dev start`
