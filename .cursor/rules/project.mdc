@@ -5,15 +5,33 @@ alwaysApply: true
 # Cursor Agent Rules
 
 # Do's and Don'ts
-- **After cloning:** Run `bun install` (or `uv run apx bun install`) to install dependencies and enable git hooks for automatic Lakebase branch setup.
+- Run `bun install` (or `uv run apx bun install`) to install dependencies and enable git hooks for automatic Lakebase branch setup.
 - OpenAPI client auto-regenerates on code changes when dev servers are running - don't manually regenerate.
 - Prefer running apx related commands via MCP server if it's available.
 - Use the apx MCP `search_registry_components` and `add_component` tools to find and add shadcn/ui components.
 - When using the API calls on the frontend, use error boundaries to handle errors.
 - Run `apx dev check` command (via CLI or MCP) to check for errors in the project code after making changes.
-- If agent has access to native browser tool, use it to verify changes on the frontend. If such tool is not present or is not working, use playwright MCP to automate browser actions (e.g. screenshots, clicks, etc.).
 - Avoid unnecessary restarts of the development servers
 - **Databricks SDK:** Use the apx MCP `docs` tool to search Databricks SDK documentation instead of guessing or hallucinating API signatures.
+
+## ⚠️ Post-Change Verification (REQUIRED)
+
+**After making ANY changes, you MUST verify them:**
+
+### Database Changes (models, migrations, schema)
+After modifying `db_models.py`, creating migrations, or any database-related changes:
+```bash
+uv run alembic upgrade head
+```
+This applies migrations to your Lakebase branch. Always verify the command succeeds before continuing.
+
+### Frontend Changes (UI, components, routes)
+After making ANY frontend changes, **ALWAYS prefer the browser tool to verify**:
+1. Use the native browser tool (cursor-browser-extension or cursor-ide-browser MCP) to take a screenshot
+2. Navigate to the affected page/component and visually confirm the changes work as expected
+3. If the browser tool is not available or not working, use Playwright MCP to automate browser actions (screenshots, clicks, etc.)
+
+**Do NOT consider frontend work complete until you have visually verified it in the browser!**
 
 ## Package Management
 - **Frontend:** Bun might not be present on user's $PATH. It's recommended to use prebundled bun (e.g., `uv run apx bun install` or `uv run apx bun add <dependency>`), unless user explicitly stated otherwise.
@@ -186,8 +204,6 @@ uv run alembic downgrade -1
 # Show current migration status
 uv run alembic current
 ```
-
-**Note:** The `lakebase-branch.sh` script automatically runs `alembic upgrade head` after setting up your branch. You only need to run migrations manually if you create new ones during development.
 
 ### Environment Configuration
 
