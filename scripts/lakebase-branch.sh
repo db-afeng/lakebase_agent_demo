@@ -282,25 +282,25 @@ EOF
     echo -e "  ${GREEN}✓ .env file written${NC}"
 }
 
-# Run migrations
-run_migrations() {
-    echo -e "\n${YELLOW}Running database migrations...${NC}"
+# # Run migrations
+# run_migrations() {
+#     echo -e "\n${YELLOW}Running database migrations...${NC}"
     
-    if command -v uv &> /dev/null; then
-        if uv run alembic upgrade head 2>&1; then
-            echo -e "  ${GREEN}✓ Migrations applied${NC}"
-        else
-            echo -e "  ${YELLOW}⚠ Migration failed (this may be expected for fresh branches)${NC}"
-            echo -e "  ${YELLOW}  If you see 'permission denied for schema public', ensure your user${NC}"
-            echo -e "  ${YELLOW}  has CREATE privileges on the database. For new Lakebase projects,${NC}"
-            echo -e "  ${YELLOW}  you may need to run migrations from the production branch first.${NC}"
-            echo -e "  ${YELLOW}  Run manually: uv run alembic upgrade head${NC}"
-        fi
-    else
-        echo -e "  ${YELLOW}⚠ uv not found, skipping migrations${NC}"
-        echo -e "  Run manually: uv run alembic upgrade head"
-    fi
-}
+#     if command -v uv &> /dev/null; then
+#         if uv run alembic upgrade head 2>&1; then
+#             echo -e "  ${GREEN}✓ Migrations applied${NC}"
+#         else
+#             echo -e "  ${YELLOW}⚠ Migration failed (this may be expected for fresh branches)${NC}"
+#             echo -e "  ${YELLOW}  If you see 'permission denied for schema public', ensure your user${NC}"
+#             echo -e "  ${YELLOW}  has CREATE privileges on the database. For new Lakebase projects,${NC}"
+#             echo -e "  ${YELLOW}  you may need to run migrations from the production branch first.${NC}"
+#             echo -e "  ${YELLOW}  Run manually: uv run alembic upgrade head${NC}"
+#         fi
+#     else
+#         echo -e "  ${YELLOW}⚠ uv not found, skipping migrations${NC}"
+#         echo -e "  Run manually: uv run alembic upgrade head"
+#     fi
+# }
 
 # Main execution
 main() {
@@ -313,7 +313,7 @@ main() {
     get_or_create_endpoint
     generate_credentials
     write_env_file
-    run_migrations
+    # run_migrations
     
     echo -e "\n${GREEN}=================================="
     echo -e "✅ Lakebase branch setup complete!"
