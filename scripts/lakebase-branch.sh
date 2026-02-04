@@ -22,7 +22,8 @@ set -euo pipefail
 # Configuration
 PROJECT_ID="9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d"
 PROJECT_PATH="projects/${PROJECT_ID}"
-DEFAULT_SOURCE_BRANCH="br-ancient-star-d17umpql"  # Production branch ID
+DEFAULT_SOURCE_BRANCH_ID="br-ancient-star-d17umpql"  # Production branch ID
+DEFAULT_SOURCE_BRANCH="${PROJECT_PATH}/branches/${DEFAULT_SOURCE_BRANCH_ID}"
 # TODO: Use TTL when CLI bug is fixed: BRANCH_TTL="21600s"  # 6 hours
 ENV_FILE=".env"
 
@@ -35,12 +36,14 @@ NC='\033[0m' # No Color
 
 # Parse arguments
 SOURCE_BRANCH="$DEFAULT_SOURCE_BRANCH"
+SOURCE_BRANCH_EXPLICIT=false
 FORCE=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --source)
             SOURCE_BRANCH="$2"
+            SOURCE_BRANCH_EXPLICIT=true
             shift 2
             ;;
         --force)
@@ -102,6 +105,31 @@ get_user_info() {
     echo -e "  Sanitized: ${GREEN}${USER_NAME}${NC}"
 }
 
+# Get the parent git branch (the branch we were on when this branch was created)
+get_parent_git_branch() {
+    echo -e "\n${YELLOW}Detecting parent git branch...${NC}"
+    
+    PARENT_GIT_BRANCH=""
+    
+    # Use git reflog to find the branch we were on when this branch was created
+    # Look for "checkout: moving from X to Y" where Y is our current branch
+    CURRENT_BRANCH=$(git branch --show-current 2>/dev/null)
+    
+    if [[ -n "$CURRENT_BRANCH" ]]; then
+        # Find the checkout entry that moved TO the current branch
+        PARENT_GIT_BRANCH=$(git reflog show --format='%gs' HEAD 2>/dev/null | \
+            grep "checkout: moving from .* to ${CURRENT_BRANCH}$" | \
+            head -1 | \
+            sed 's/checkout: moving from \([^ ]*\) to .*/\1/')
+    fi
+    
+    if [[ -n "$PARENT_GIT_BRANCH" ]]; then
+        echo -e "  Parent git branch: ${GREEN}${PARENT_GIT_BRANCH}${NC}"
+    else
+        echo -e "  ${YELLOW}Could not detect parent git branch from reflog${NC}"
+    fi
+}
+
 # Get current git branch or worktree name
 get_git_branch() {
     echo -e "\n${YELLOW}Getting git branch...${NC}"
@@ -154,6 +182,49 @@ get_git_branch() {
     echo -e "  Sanitized: ${GREEN}${SANITIZED_GIT_BRANCH}${NC}"
 }
 
+# Resolve the source Lakebase branch to use for branching
+# Tries to find the user's Lakebase branch for the parent git branch, falls back to DEFAULT_SOURCE_BRANCH
+resolve_source_branch() {
+    echo -e "\n${YELLOW}Resolving source Lakebase branch...${NC}"
+    
+    # If --source was explicitly provided, use that and skip auto-detection
+    if [[ "$SOURCE_BRANCH_EXPLICIT" == "true" ]]; then
+        echo -e "  Using explicitly provided source: ${GREEN}${SOURCE_BRANCH}${NC}"
+        return
+    fi
+    
+    # If we detected a parent git branch, try to find its corresponding Lakebase branch
+    if [[ -n "$PARENT_GIT_BRANCH" ]]; then
+        # Sanitize the parent branch name the same way we sanitize git branches
+        SANITIZED_PARENT=$(echo "$PARENT_GIT_BRANCH" | tr '/' '-' | tr '_' '-' | tr '[:upper:]' '[:lower:]')
+        PARENT_LAKEBASE_NAME="${USER_NAME}-${SANITIZED_PARENT}"
+        PARENT_LAKEBASE_PATH="${PROJECT_PATH}/branches/${PARENT_LAKEBASE_NAME}"
+        
+        echo -e "  Looking for parent Lakebase branch: ${BLUE}${PARENT_LAKEBASE_NAME}${NC}"
+        
+        # Try to get the parent Lakebase branch
+        PARENT_BRANCH_JSON=$(databricks postgres get-branch "${PARENT_LAKEBASE_PATH}" -o json 2>/dev/null) || PARENT_BRANCH_JSON=""
+        
+        if [[ -n "$PARENT_BRANCH_JSON" ]]; then
+            # Extract the full branch path from the name field (format: projects/{id}/branches/{branch_id})
+            PARENT_BRANCH_FULL_PATH=$(echo "$PARENT_BRANCH_JSON" | jq -r '.name')
+            
+            if [[ -n "$PARENT_BRANCH_FULL_PATH" && "$PARENT_BRANCH_FULL_PATH" != "null" ]]; then
+                SOURCE_BRANCH="$PARENT_BRANCH_FULL_PATH"
+                echo -e "  ${GREEN}✓ Found parent Lakebase branch${NC}"
+                echo -e "  Source branch: ${GREEN}${SOURCE_BRANCH}${NC}"
+                return
+            fi
+        fi
+        
+        echo -e "  ${YELLOW}Parent Lakebase branch not found${NC}"
+    fi
+    
+    # Fall back to default source branch
+    SOURCE_BRANCH="$DEFAULT_SOURCE_BRANCH"
+    echo -e "  Falling back to default: ${GREEN}${SOURCE_BRANCH}${NC}"
+}
+
 # Generate branch name
 generate_branch_name() {
     # Format: {user}/{git_branch}
@@ -196,7 +267,7 @@ create_branch() {
     # Note: Fields must be nested under "spec"
     # TODO: Add TTL when CLI bug is fixed: {"spec": {"ttl": {"seconds": 21600}}}
     BRANCH_RESULT=$(databricks postgres create-branch "${PROJECT_PATH}" "${LAKEBASE_BRANCH}" \
-        --json '{"spec": {"no_expiry": true}}' \
+        --json '{"spec": {"source_branch": "'"${SOURCE_BRANCH}"'", "no_expiry": true}}' \
         -o json 2>&1) || {
         echo -e "${RED}❌ Failed to create branch${NC}"
         echo "$BRANCH_RESULT"
@@ -307,6 +378,8 @@ main() {
     check_requirements
     get_user_info
     get_git_branch
+    get_parent_git_branch
+    resolve_source_branch
     generate_branch_name
     check_branch_exists
     create_branch
