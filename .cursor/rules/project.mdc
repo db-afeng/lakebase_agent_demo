@@ -163,7 +163,7 @@ Branch names are sanitized: slashes become hyphens, dots become hyphens, all low
 
 ### Databricks Postgres CLI Commands
 
-**Requires Databricks CLI >= 0.286+**
+**Requires Databricks CLI >= 0.287.0**
 
 ```bash
 # List branches in project

@@ -137,7 +137,7 @@ This creates your isolated Lakebase branch and configures `.env` with credential
 | Your local dev | `{your-username}/{git-branch}` |
 | Agent worktree | `{your-username}/{git-branch}/agent-task` |
 
-### Databricks Postgres CLI (>= 0.285)
+### Databricks Postgres CLI (>= 0.287.0)
 
 ```bash
 # List your project's branches

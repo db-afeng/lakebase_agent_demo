@@ -13,7 +13,7 @@
 #   --force           Force recreation of existing branch
 #
 # Requirements:
-#   - Databricks CLI >= 0.285 (with postgres commands)
+#   - Databricks CLI >= 0.287.0 (with postgres commands)
 #   - jq
 #   - Authenticated to Databricks workspace
 
@@ -24,7 +24,7 @@ PROJECT_ID="9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d"
 PROJECT_PATH="projects/${PROJECT_ID}"
 DEFAULT_SOURCE_BRANCH_ID="br-ancient-star-d17umpql"  # Production branch ID
 DEFAULT_SOURCE_BRANCH="${PROJECT_PATH}/branches/${DEFAULT_SOURCE_BRANCH_ID}"
-# TODO: Use TTL when CLI bug is fixed: BRANCH_TTL="21600s"  # 6 hours
+BRANCH_TTL="21600s"  # 6 hours
 ENV_FILE=".env"
 
 # Colors for output
@@ -72,6 +72,15 @@ check_requirements() {
     CLI_VERSION=$(databricks version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "unknown")
     echo -e "  Databricks CLI: ${GREEN}${CLI_VERSION}${NC}"
     
+    # Require Databricks CLI >= 0.287.0 (for postgres create-branch with TTL)
+    MIN_CLI_VERSION="0.287.0"
+    CLI_VER_NUM=$(echo "$CLI_VERSION" | sed 's/^v//')
+    if [[ "$CLI_VER_NUM" != "unknown" ]] && [[ "$(printf '%s\n%s\n' "$MIN_CLI_VERSION" "$CLI_VER_NUM" | sort -V | head -1)" != "$MIN_CLI_VERSION" ]]; then
+        echo -e "${RED}❌ Databricks CLI ${CLI_VERSION} is too old.${NC}"
+        echo -e "   This script requires version ${MIN_CLI_VERSION} or later (for postgres create-branch with TTL).${NC}"
+        exit 1
+    fi
+    
     if ! command -v jq &> /dev/null; then
         echo -e "${RED}❌ jq not found. Install it: brew install jq${NC}"
         exit 1
@@ -81,7 +90,7 @@ check_requirements() {
     # Check if postgres commands are available
     if ! databricks postgres --help &> /dev/null; then
         echo -e "${RED}❌ Databricks CLI postgres commands not available.${NC}"
-        echo -e "   Upgrade to CLI version 0.285 or later.${NC}"
+        echo -e "   Upgrade to CLI version 0.287.0 or later.${NC}"
         exit 1
     fi
     echo -e "  Postgres commands: ${GREEN}available${NC}"
@@ -263,11 +272,10 @@ create_branch() {
     echo -e "\n${YELLOW}Creating Lakebase branch...${NC}"
     echo -e "  Source: ${BLUE}${SOURCE_BRANCH}${NC}"
     
-    # Create branch from source
+    # Create branch from source with TTL
     # Note: Fields must be nested under "spec"
-    # TODO: Add TTL when CLI bug is fixed: {"spec": {"ttl": {"seconds": 21600}}}
     BRANCH_RESULT=$(databricks postgres create-branch "${PROJECT_PATH}" "${LAKEBASE_BRANCH}" \
-        --json '{"spec": {"source_branch": "'"${SOURCE_BRANCH}"'", "no_expiry": true}}' \
+        --json '{"spec": {"source_branch": "'"${SOURCE_BRANCH}"'", "ttl": "'"${BRANCH_TTL}"'"}}' \
         -o json 2>&1) || {
         echo -e "${RED}❌ Failed to create branch${NC}"
         echo "$BRANCH_RESULT"
