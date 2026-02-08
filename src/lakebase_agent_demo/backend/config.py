@@ -1,13 +1,16 @@
+import os
 from importlib import resources
 from pathlib import Path
 from typing import ClassVar
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .._metadata import app_name, app_slug
+
+from .lakebase_credentials import resolve_lakebase_credentials
 
 # project root is the parent of the src folder
 project_root = Path(__file__).parent.parent.parent.parent
@@ -15,6 +18,14 @@ env_file = project_root / ".env"
 
 if env_file.exists():
     load_dotenv(dotenv_path=env_file)
+
+
+def _is_oauth_mode() -> bool:
+    """True when Databricks OAuth env vars are set (deployed app)."""
+    return bool(
+        os.environ.get("DATABRICKS_CLIENT_ID")
+        and os.environ.get("DATABRICKS_CLIENT_SECRET")
+    )
 
 
 class AppConfig(BaseSettings):
@@ -30,6 +41,15 @@ class AppConfig(BaseSettings):
     db_user: str = Field(default="")
     db_password: str = Field(default="")
     db_sslmode: str = Field(default="require")
+
+    @model_validator(mode="after")
+    def resolve_db_credentials_for_oauth(self) -> "AppConfig":
+        """When OAuth env vars are set, derive db_user/db_password from Databricks API."""
+        if _is_oauth_mode():
+            user, password = resolve_lakebase_credentials()
+            object.__setattr__(self, "db_user", user)
+            object.__setattr__(self, "db_password", password)
+        return self
 
     @property
     def static_assets_path(self) -> Path:

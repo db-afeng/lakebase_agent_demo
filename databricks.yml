@@ -26,8 +26,11 @@ resources:
             value: "postgres"
           - name: LAKEBASE_AGENT_DEMO_DB_SSLMODE
             value: "require"
-          # Note: DB_USER and DB_PASSWORD should be set via Databricks App secrets
-          # or service principal authentication in production
+          # OAuth mode (recommended for deployed app): set via Databricks App secrets:
+          #   DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET, DATABRICKS_HOST,
+          #   LAKEBASE_AGENT_DEMO_DB_OAUTH_ENDPOINT (full path, e.g. projects/{project_id}/branches/{branch_id}/endpoints/{endpoint_id})
+          # The app derives DB user (client_id) and password (OAuth token) at startup and runs Alembic migrations.
+          # Do not set LAKEBASE_AGENT_DEMO_DB_USER / LAKEBASE_AGENT_DEMO_DB_PASSWORD when using OAuth.
 
 targets:
   dev:
