@@ -23,9 +23,11 @@ resources:
           - name: LAKEBASE_AGENT_DEMO_DB_PORT
             value: "5432"
           - name: LAKEBASE_AGENT_DEMO_DB_NAME
-            value: "postgres"
+            value: "databricks_postgres"
           - name: LAKEBASE_AGENT_DEMO_DB_SSLMODE
             value: "require"
+          - name: LAKEBASE_AGENT_DEMO_DB_OAUTH_ENDPOINT
+            value: "projects/9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d/branches/br-ancient-star-d17umpql/endpoints/ep-young-mode-d1ljatae"
           # OAuth mode (recommended for deployed app): set via Databricks App secrets:
           #   DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET, DATABRICKS_HOST,
           #   LAKEBASE_AGENT_DEMO_DB_OAUTH_ENDPOINT (full path, e.g. projects/{project_id}/branches/{branch_id}/endpoints/{endpoint_id})

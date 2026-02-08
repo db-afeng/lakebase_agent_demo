@@ -3,6 +3,7 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -11,6 +12,12 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from .config import AppConfig
+from .lakebase_credentials import _is_oauth_mode, get_password_for_connection
+
+
+def _inject_oauth_password_on_connect(dialect: object, conn_rec: object, cargs: object, cparams: dict) -> None:
+    """DialectEvents.do_connect: set password from current OAuth token (for token refresh)."""
+    cparams["password"] = get_password_for_connection()
 
 
 def create_engine(config: AppConfig) -> AsyncEngine:
@@ -21,13 +28,18 @@ def create_engine(config: AppConfig) -> AsyncEngine:
             "Set LAKEBASE_AGENT_DEMO_DB_HOST and LAKEBASE_AGENT_DEMO_DB_USER environment variables."
         )
 
-    return create_async_engine(
+    engine = create_async_engine(
         config.database_url,
         echo=False,
         pool_size=5,
         max_overflow=10,
         pool_pre_ping=True,
     )
+
+    if _is_oauth_mode():
+        event.listens_for(engine.sync_engine, "do_connect")(_inject_oauth_password_on_connect)
+
+    return engine
 
 
 def create_session_maker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:

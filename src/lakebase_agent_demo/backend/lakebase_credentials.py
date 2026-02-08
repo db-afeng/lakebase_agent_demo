@@ -1,8 +1,15 @@
 """Resolve Lakebase DB credentials: from env (local) or via Databricks OAuth (deployed app)."""
 
 import os
+import threading
+import time
 
 from .._metadata import app_slug
+
+# Token cache for OAuth: (password, expiry_ts). Refreshed before expiry (e.g. 45 min TTL).
+_oauth_token_cache: tuple[str, float] | None = None
+_oauth_token_lock = threading.Lock()
+_OAUTH_TOKEN_TTL_SECONDS = 45 * 60  # 45 minutes; tokens expire in 1 hour
 
 
 def _is_oauth_mode() -> bool:
@@ -65,3 +72,24 @@ def _resolve_oauth_credentials() -> tuple[str, str]:
     credential = w.postgres.generate_database_credential(endpoint=endpoint)
     token = credential.token or ""
     return (client_id, token)
+
+
+def get_password_for_connection() -> str:
+    """
+    Return the current DB password for use when opening a new connection.
+
+    In OAuth mode, returns a cached token and refreshes it if expired (or missing).
+    Call this from pool/dialect hooks (e.g. do_connect) so each new connection
+    uses a valid token. Not for use in non-OAuth mode (caller should check _is_oauth_mode first).
+    """
+    global _oauth_token_cache
+    if not _is_oauth_mode():
+        return ""
+    with _oauth_token_lock:
+        now = time.time()
+        if _oauth_token_cache is not None and now < _oauth_token_cache[1]:
+            return _oauth_token_cache[0]
+        _, password = _resolve_oauth_credentials()
+        expiry = now + _OAUTH_TOKEN_TTL_SECONDS
+        _oauth_token_cache = (password, expiry)
+        return password
