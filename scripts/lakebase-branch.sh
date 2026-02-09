@@ -22,7 +22,7 @@ set -euo pipefail
 # Configuration
 PROJECT_ID="9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d"
 PROJECT_PATH="projects/${PROJECT_ID}"
-DEFAULT_SOURCE_BRANCH_ID="br-wild-lake-d1u4f9vi"  # Development branch ID
+DEFAULT_SOURCE_BRANCH_ID="alex-feng-main"  # Development branch ID
 DEFAULT_SOURCE_BRANCH="${PROJECT_PATH}/branches/${DEFAULT_SOURCE_BRANCH_ID}"
 BRANCH_TTL="21600s"  # 6 hours
 ENV_FILE=".env"
