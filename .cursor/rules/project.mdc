@@ -10,6 +10,7 @@ alwaysApply: true
 - Prefer running apx related commands via MCP server if it's available.
 - Use the apx MCP `search_registry_components` and `add_component` tools to find and add shadcn/ui components.
 - When using the API calls on the frontend, use error boundaries to handle errors.
+- Run `./scripts/lakebase-branch.sh` after any changes to update the backend database and see the changes.
 - Run `apx dev check` command (via CLI or MCP) to check for errors in the project code after making changes.
 - Avoid unnecessary restarts of the development servers
 - **Databricks SDK:** Use the apx MCP `docs` tool to search Databricks SDK documentation instead of guessing or hallucinating API signatures.

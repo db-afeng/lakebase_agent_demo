@@ -25,7 +25,7 @@ export function CategoryFilter({
         className={
           selectedCategoryId === null
             ? "bg-amber-600 hover:bg-amber-500 text-white"
-            : "border-amber-700/50 text-amber-200 hover:bg-amber-900/50 hover:text-amber-100"
+            : "border-amber-700/50 bg-amber-950/60 text-amber-200 hover:bg-amber-900/50 hover:text-amber-100"
         }
       >
         All Products
@@ -39,7 +39,7 @@ export function CategoryFilter({
           className={
             selectedCategoryId === category.id
               ? "bg-amber-600 hover:bg-amber-500 text-white"
-              : "border-amber-700/50 text-amber-200 hover:bg-amber-900/50 hover:text-amber-100"
+              : "border-amber-700/50 bg-amber-950/60 text-amber-200 hover:bg-amber-900/50 hover:text-amber-100"
           }
         >
           {category.name}
