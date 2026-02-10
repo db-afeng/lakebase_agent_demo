@@ -92,7 +92,18 @@ This starts the backend, frontend, and OpenAPI watcher. Visit the URL shown in t
 
 Open this project in [Cursor](https://cursor.com) (or your preferred AI coding IDE) and try this prompt:
 
-> <!-- INSERT YOUR PROMPT HERE -->
+---
+
+Implement product reviews for the websites. Here are the requirements:
+
+- The Main Grid: Update the product cards on the homepage to display an aggregated star rating and review count (e.g., "★ 4.8 (42 reviews)") near the price.
+- Product Details: When a user clicks "View Details," add a popup modal that shows the product info and lists all reviews for that item. there should be a way for the user to go the a full fledged details page for each product from the modal. In full page, Add a simple form on the details page allowing users to submit a rating (1-5 stars) and a comment.
+- Funny Data: Please seed the database with 3-4 dummy reviews for each product. Since this is a satirical store, make the reviews humorous and technical. Examples: "The JSON was crisp and perfectly nested," "This brick has terrible latency," or "The SQL dump smelled like fresh tables."
+- Design: Ensure the new UI elements match the existing dark mode and orange color scheme.
+
+After implementing, run the lakebase-branch.sh script and start the dev app, checking the logs if everything is working.
+
+---
 
 The agent will create a worktree, which triggers the git hook to automatically set up an isolated Lakebase branch. The agent can then make database changes, run migrations, and modify the app -- all on its own isolated branch.
 
