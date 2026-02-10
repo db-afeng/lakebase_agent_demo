@@ -141,7 +141,7 @@ This creates your isolated Lakebase branch and configures `.env` with credential
 
 ```bash
 # List your project's branches
-databricks postgres list-branches "projects/9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d"
+databricks postgres list-branches "projects/{project_id}"
 
 # Create a branch (no expiry)
 databricks postgres create-branch "projects/{project_id}" "{branch_name}" \

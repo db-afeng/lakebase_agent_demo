@@ -19,20 +19,40 @@
 
 set -euo pipefail
 
-# Configuration
-PROJECT_ID="9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d"
-PROJECT_PATH="projects/${PROJECT_ID}"
-DEFAULT_SOURCE_BRANCH_ID="alex-feng-main"  # Development branch ID
-DEFAULT_SOURCE_BRANCH="${PROJECT_PATH}/branches/${DEFAULT_SOURCE_BRANCH_ID}"
-BRANCH_TTL="21600s"  # 6 hours
-ENV_FILE=".env"
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Load configuration from lakebase.config
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONFIG_FILE="${SCRIPT_DIR}/../lakebase.config"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo -e "${RED}❌ Missing lakebase.config${NC}"
+    echo -e "   Copy the example and fill in your Lakebase project ID:"
+    echo -e "   ${YELLOW}cp lakebase.config.example lakebase.config${NC}"
+    exit 1
+fi
+
+# shellcheck source=/dev/null
+source "$CONFIG_FILE"
+
+if [[ -z "${LAKEBASE_PROJECT_ID:-}" || "$LAKEBASE_PROJECT_ID" == "<YOUR_LAKEBASE_PROJECT_ID>" ]]; then
+    echo -e "${RED}❌ LAKEBASE_PROJECT_ID is not set in lakebase.config${NC}"
+    echo -e "   Edit lakebase.config and set your Lakebase project ID."
+    exit 1
+fi
+
+# Configuration (from lakebase.config)
+PROJECT_ID="$LAKEBASE_PROJECT_ID"
+PROJECT_PATH="projects/${PROJECT_ID}"
+DEFAULT_SOURCE_BRANCH_ID="${LAKEBASE_SOURCE_BRANCH:-production}"
+DEFAULT_SOURCE_BRANCH="${PROJECT_PATH}/branches/${DEFAULT_SOURCE_BRANCH_ID}"
+BRANCH_TTL="${LAKEBASE_BRANCH_TTL:-21600s}"
+ENV_FILE=".env"
 
 # Parse arguments
 SOURCE_BRANCH="$DEFAULT_SOURCE_BRANCH"

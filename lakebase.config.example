@@ -1,0 +1,15 @@
+# Lakebase Project Configuration
+# ================================
+# Copy this file to lakebase.config and fill in your values:
+#   cp lakebase.config.example lakebase.config
+#
+# Then run: ./scripts/lakebase-branch.sh
+
+# Your Lakebase project ID (from Databricks workspace)
+LAKEBASE_PROJECT_ID="<YOUR_LAKEBASE_PROJECT_ID>"
+
+# Source branch to create dev branches from (default: "production")
+LAKEBASE_SOURCE_BRANCH="production"
+
+# Branch TTL in seconds (default: 6 hours). Set to "0" for no expiry.
+LAKEBASE_BRANCH_TTL="21600s"

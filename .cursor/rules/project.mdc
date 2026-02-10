@@ -156,7 +156,7 @@ The script handles everything including running migrations on your isolated bran
 | Context | Lakebase Branch |
 |---------|-----------------|
 | Production (deployed app) | `production` (default branch) |
-| Local dev on `main` | `{username}-main` (e.g., `alex-feng-main`) |
+| Local dev on `main` | `{username}-main` (e.g., `jane-doe-main`) |
 | Local dev on `feature-x` | `{username}-feature-x` |
 | Agent worktree | `{username}-{parent-branch}-worktree-{worktree-dir}` |
 

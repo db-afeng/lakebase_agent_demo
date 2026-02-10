@@ -38,3 +38,9 @@ node_modules/
 
 # UI dist folder
 src/lakebase_agent_demo/__dist__/
+
+# Lakebase config (contains project-specific IDs)
+lakebase.config
+
+# Scratch files
+scratch/

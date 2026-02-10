@@ -17,9 +17,9 @@ resources:
       source_code_path: ./.build
       config:
         env:
-          # Production Lakebase connection (production branch)
+          # Production Lakebase connection -- fill these in before deploying
           - name: LAKEBASE_AGENT_DEMO_DB_HOST
-            value: "ep-young-mode-d1ljatae.database.us-west-2.cloud.databricks.com"
+            value: "<YOUR_PRODUCTION_ENDPOINT_HOST>"
           - name: LAKEBASE_AGENT_DEMO_DB_PORT
             value: "5432"
           - name: LAKEBASE_AGENT_DEMO_DB_NAME
@@ -27,10 +27,10 @@ resources:
           - name: LAKEBASE_AGENT_DEMO_DB_SSLMODE
             value: "require"
           - name: LAKEBASE_AGENT_DEMO_DB_OAUTH_ENDPOINT
-            value: "projects/9e2e7ee4-bc9e-4753-8249-f8f49f8ac26d/branches/br-ancient-star-d17umpql/endpoints/ep-young-mode-d1ljatae"
+            value: "<YOUR_PRODUCTION_ENDPOINT_PATH>"
+          # LAKEBASE_AGENT_DEMO_DB_OAUTH_ENDPOINT format: projects/{project_id}/branches/{branch_id}/endpoints/{endpoint_id}
           # OAuth mode (recommended for deployed app): set via Databricks App secrets:
-          #   DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET, DATABRICKS_HOST,
-          #   LAKEBASE_AGENT_DEMO_DB_OAUTH_ENDPOINT (full path, e.g. projects/{project_id}/branches/{branch_id}/endpoints/{endpoint_id})
+          #   DATABRICKS_CLIENT_ID, DATABRICKS_CLIENT_SECRET, DATABRICKS_HOST
           # The app derives DB user (client_id) and password (OAuth token) at startup and runs Alembic migrations.
           # Do not set LAKEBASE_AGENT_DEMO_DB_USER / LAKEBASE_AGENT_DEMO_DB_PASSWORD when using OAuth.
 
